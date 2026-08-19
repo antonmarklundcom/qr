@@ -1,6 +1,6 @@
 # QR Review Cards — v1 Plan
 
-**Status:** Draft for review — no application code exists yet, this repo is empty apart from `.gitignore`.
+**Status:** Approved — all §9 decisions resolved 2026-08-19; ready for implementation. No application code exists yet.
 **Product:** SaaS for local businesses: a styled QR code that routes customers to leave a Google review, printed as a card/sticker. Tripwire into a larger review/reputation offering (minarecensioner / resenas.com.py family).
 
 ---
@@ -171,13 +171,13 @@ Analytics view stays deliberately simple in v1: total scans, scans/day chart (la
 - **GDPR (matters for the Swedish market, good hygiene for PY):** scans store **no IP and no precise geo** — coarse device type + hashed UA only. Feedback form (v1.1) will collect personal data → needs purpose text + retention; noted for that phase.
 - **Locale:** UI strings behind a minimal dictionary keyed by tenant locale (es-PY voseo / sv-SE du-form) — even if v1 ships one market first, hardcoded Spanish strings are the expensive mistake.
 
-## 9. Open questions — need your decision before implementation
+## 9. Decisions — resolved 2026-08-19
 
-1. **Market order & domain(s).** Is v1 Paraguay-first (resenas.com.py), Sweden-first (minarecensioner), or one codebase deployed twice? My recommendation: **one codebase, locale per tenant, deploy to one domain first** (whichever market you're selling in next). This affects the `/r/` URL printed on physical cards, so it's the one thing that can't change later per card. Which domain does v1 ship on?
-2. **Star-rating routing:** confirm **defer to v1.1** (§5), and — separately — whether v1.1 should be the compliant "both options always visible" variant or classic gating. My recommendation: compliant variant; the gating version is a liability for a product you're attaching your reputation brand to.
-3. **Logo storage:** files on disk under the app (survives redeploys only if the uploads dir is outside the build output — needs a quick verification on Hostinger's Git-deploy behavior) **vs** base64 in the DB (~50–200 KB per logo, dead simple, no filesystem risk). My recommendation for v1: **DB base64 with a 300 KB cap**, migrate to disk/object storage if it ever hurts. OK?
-4. **Free tier shape:** does the tripwire have a free tier at all, or is it paid-only with a demo? Affects `plan` gating and the register flow, nothing structural.
-5. **Scan uniqueness:** v1 counts raw scans only. Is a rough "unique scans" number (via UA-hash + day bucket) wanted in v1, or fine as a later refinement? (It's cheap but imprecise; I'd skip it and label the metric honestly as "scans".)
+1. **Market order & domain(s): Paraguay first.** One codebase, locale per tenant; first deploy on the PY domain (resenas.com.py or whichever PY domain is confirmed at deploy time — the exact domain must be locked before the first card is printed, since `/r/` URLs go on physical cards). Sweden (minarecensioner) launches later as a second deploy of the same code. Spanish (voseo) is the default CTA/UI language.
+2. **Star-rating routing: deferred to v1.1, compliant variant.** v1 ships direct 302 redirect only. v1.1 adds the interstitial where every customer sees both "review on Google" and "private feedback" regardless of stars (rating is informational). Classic gating is ruled out on Google-policy grounds. Schema (`short_links.mode`) already supports it.
+3. **Logo storage: base64 in DB with a 300 KB cap.** No filesystem dependency on Hostinger's Git-deploy; migrate to disk/object storage only if it ever hurts.
+4. **Free tier: yes, with watermark.** Free = 1 business, 1 card, watermarked export ("Creado con <domain>"). Paid = unlimited businesses/cards + clean export. Limits and watermark enforced server-side; `plan` flag flipped manually after payment (no payment integration in v1).
+5. **Scan metrics: raw scans only in v1.** Total scans, scans/day (30 days), device split — labeled honestly as "scans". `uaHash` is stored from day one so a rough uniques metric can be added later without schema changes.
 
 ## 10. Explicitly out of scope (locked)
 
