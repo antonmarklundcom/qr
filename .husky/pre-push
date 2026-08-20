@@ -1,0 +1,3 @@
+npm run typecheck && npm run build || {
+  echo "Build failed — push blocked."; exit 1;
+}
