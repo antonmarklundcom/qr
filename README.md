@@ -117,6 +117,8 @@ npm run manage-user -- --add --tenant 3 --email socio@ejemplo.com.py --role admi
 
 ## Deploying
 
+Step-by-step: [`docs/go-live-checklist.md`](docs/go-live-checklist.md).
+
 Manual, per the `nextjs-deploy-hostinger` playbook: hPanel → Websites → Node.js Apps →
 Import Git Repository, then set `DATABASE_URL`, `SESSION_SECRET`, `APP_URL` and
 `SCAN_HASH_SALT` as environment variables and redeploy.
