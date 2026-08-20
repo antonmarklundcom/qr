@@ -207,6 +207,14 @@ export const esPY = {
     noScans: "Todavía no hay escaneos de esta tarjeta.",
     rawCountNote:
       "Contamos escaneos crudos, no personas únicas. No guardamos IP ni ubicación.",
+    feedbackTitle: "Comentarios privados",
+    feedbackTotal: "Mensajes recibidos",
+    avgRating: "Calificación promedio",
+    ratedCount: "Con estrellas",
+    responseRate: "Escaneos que dejaron mensaje",
+    ratingBreakdown: "Distribución de estrellas",
+    noFeedback: "Todavía nadie dejó un comentario privado en esta tarjeta.",
+    openInbox: "Ver todos los comentarios",
     device: {
       mobile: "Celular",
       tablet: "Tablet",

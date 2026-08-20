@@ -95,6 +95,17 @@ export const svSE: DeepPartial<Dictionary> = {
     errorRateLimited: "Vi har redan tagit emot flera meddelanden härifrån. Försök senare.",
   },
 
+  stats: {
+    feedbackTitle: "Privat feedback",
+    feedbackTotal: "Mottagna meddelanden",
+    avgRating: "Snittbetyg",
+    ratedCount: "Med betyg",
+    responseRate: "Skanningar som lämnade meddelande",
+    ratingBreakdown: "Fördelning av stjärnor",
+    noFeedback: "Ingen har lämnat privat feedback på det här kortet än.",
+    openInbox: "Visa all feedback",
+  },
+
   feedback: {
     title: "Privat feedback",
     subtitle:
