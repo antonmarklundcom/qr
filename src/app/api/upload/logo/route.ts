@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { businesses } from "@/db/schema";
 import { jsonError, withRole } from "@/lib/api";
 import { LOGO_ALLOWED_TYPES, LOGO_MAX_BYTES } from "@/lib/plan";
+import { buildLogoDataUrl } from "@/lib/logo-validation";
 import { getBusiness } from "@/lib/queries";
 
 /**
@@ -45,7 +46,14 @@ export async function POST(request: Request) {
   if (buffer.byteLength > LOGO_MAX_BYTES) {
     return jsonError(413, ctx.t.businesses.logoTooBig);
   }
-  const logoDataUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
+
+  // The declared Content-Type only decides whether to bother reading the file; the type
+  // that gets stored is the one sniffed from the bytes.
+  const logo = buildLogoDataUrl(buffer);
+  if (!logo.ok || !logo.dataUrl) {
+    return jsonError(415, ctx.t.businesses.logoBadType);
+  }
+  const logoDataUrl = logo.dataUrl;
 
   await db
     .update(businesses)

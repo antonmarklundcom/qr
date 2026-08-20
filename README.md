@@ -32,8 +32,8 @@ $env:DATABASE_URL = "mysql://user:pass@host:3306/dbname"   # PowerShell
 npm run seed:demo
 ```
 
-Seed credentials: `demo@resenas.com.py` / `demo1234` (override with `DEMO_PASSWORD`).
-Rotate them before any deployment that is reachable from the internet.
+The seed prints its login once. The password is random unless you set `DEMO_PASSWORD`,
+so pointing the seed at a real database never plants a guessable owner account.
 
 ## Scripts
 
@@ -45,6 +45,17 @@ Rotate them before any deployment that is reachable from the internet.
 | `npm run db:push` | Apply `src/db/schema.ts` to the database |
 | `npm run db:generate` | Write a migration instead of pushing |
 | `npm run seed:demo` | Idempotent Paraguayan demo tenant + 30 days of scans |
+| `npm run set-plan` | Flip a tenant between `free` and `paid` (`--list`, `--tenant`/`--email`, `--plan`) |
+| `npm run manage-user` | Add a user to an existing tenant, change a role, reset a password |
+
+There is no payment integration and no invite flow in v1, by design. A customer pays by
+transferencia and you flip the flag:
+
+```bash
+npm run set-plan -- --list
+npm run set-plan -- --email cliente@ejemplo.com.py --plan paid
+npm run manage-user -- --add --tenant 3 --email socio@ejemplo.com.py --role admin --password '...'
+```
 
 ## Routes
 
@@ -69,6 +80,11 @@ Rotate them before any deployment that is reachable from the internet.
 - **Roles.** `owner` > `admin` > `member`, checked with `requireRole`/`withRole` on
   every mutating route. Hidden buttons are not a security boundary.
 - **No IP, no geo.** Scans store a coarse device type and a salted UA hash.
+- **Uploads are typed by their bytes, not their headers.** The logo route sniffs the
+  real image type and stores that; an SVG is stripped of scripts, event handlers and
+  `foreignObject` before it is saved.
+- **The app refuses to start on the `.env.example` `SESSION_SECRET`** — a placeholder in
+  source control would let anyone forge a session cookie.
 - **No UI string in a component.** Everything comes from `src/lib/locale`.
 - **No GitHub Actions workflow.** Quality gate is the husky `pre-push` hook
   (`typecheck && build`); `pre-commit` blocks anything under `.github/workflows/`.

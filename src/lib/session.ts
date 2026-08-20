@@ -22,6 +22,15 @@ function sessionOptions(): SessionOptions {
       "SESSION_SECRET is missing or shorter than 32 characters — see .env.example",
     );
   }
+  // The .env.example placeholder is long enough to pass the length check, so a
+  // deployment that copied the file verbatim would boot with a secret that is public in
+  // source control — anyone could forge a session cookie. Refuse to start instead.
+  if (/change-me/i.test(password)) {
+    throw new Error(
+      "SESSION_SECRET is still the .env.example placeholder — generate a real one: " +
+        `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`,
+    );
+  }
   return {
     password,
     cookieName: SESSION_COOKIE,

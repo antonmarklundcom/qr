@@ -11,6 +11,7 @@
  *
  * Idempotent: re-running updates the same rows instead of duplicating them.
  */
+import { randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db, pool } from "../src/db";
 import { businesses, qrCodes, scans, shortLinks, tenants, users } from "../src/db/schema";
@@ -20,8 +21,15 @@ import { buildReviewDestination, generateSlug } from "../src/lib/short-links";
 import type { DeviceType } from "../src/lib/scan-tracking";
 
 const DEMO_EMAIL = "demo@resenas.com.py";
-const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? "demo1234";
 const DEMO_SLUG = "demopy1";
+
+/**
+ * A fixed default here would put a guessable owner login on every database this script
+ * is ever pointed at, including production. Set DEMO_PASSWORD to choose one; otherwise
+ * a random one is generated and printed once.
+ */
+const DEMO_PASSWORD =
+  process.env.DEMO_PASSWORD ?? randomBytes(9).toString("base64url");
 
 async function main() {
   if (!process.env.DATABASE_URL) {
