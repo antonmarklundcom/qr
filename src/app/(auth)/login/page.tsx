@@ -13,7 +13,7 @@ export default async function LoginPage() {
     <>
       <span className="eyebrow mb-3">{t.brand.name}</span>
       <h1 className="display-md mb-2">{t.auth.loginTitle}</h1>
-      <p className="muted mb-6 text-[var(--t--1)]">{t.auth.loginSubtitle}</p>
+      <p className="muted mb-6 text-meta">{t.auth.loginSubtitle}</p>
       <AuthForm mode="login" action={loginAction} t={t} />
       <p className="meta mt-6 mb-0">
         {t.auth.noAccount}{" "}

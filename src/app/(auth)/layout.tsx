@@ -12,7 +12,7 @@ export default function AuthLayout({
       <header className="wrap py-6">
         <Link
           href="/"
-          className="font-[family-name:var(--font-display)] text-[var(--t-1)] font-medium text-[color:var(--ink)] no-underline"
+          className="font-[family-name:var(--font-display)] text-title font-medium text-[color:var(--ink)] no-underline"
         >
           {t.brand.name}
         </Link>

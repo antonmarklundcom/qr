@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getDictionary } from "@/lib/locale";
 import { getAuthContext } from "@/lib/auth";
+import { QrMark } from "@/components/QrMark";
 
 export default async function LandingPage() {
   const ctx = await getAuthContext();
@@ -16,7 +17,7 @@ export default async function LandingPage() {
   return (
     <main>
       <header className="wrap flex items-center justify-between py-6">
-        <span className="font-[family-name:var(--font-display)] text-[var(--t-1)] font-medium">
+        <span className="font-[family-name:var(--font-display)] text-title font-medium">
           {t.brand.name}
         </span>
         <nav className="flex items-center gap-3">
@@ -65,7 +66,7 @@ export default async function LandingPage() {
 
         <div className="lg:col-span-5">
           <div className="card card--ink grain rounded-[var(--r-lg)] p-8">
-            <span className="eyebrow mb-4 text-[color:var(--base)] opacity-70">
+            <span className="eyebrow meta--on-ink mb-4">
               {t.editor.preview}
             </span>
             <div
@@ -73,17 +74,9 @@ export default async function LandingPage() {
               style={{ boxShadow: "var(--shadow-2)" }}
             >
               <div className="flex h-full items-center gap-4">
-                <div
-                  aria-hidden
-                  className="h-full aspect-square shrink-0 rounded-[var(--r-sm)]"
-                  style={{
-                    backgroundImage:
-                      "repeating-conic-gradient(var(--ink) 0% 25%, #ffffff 0% 50%)",
-                    backgroundSize: "14px 14px",
-                  }}
-                />
+                <QrMark className="h-full aspect-square shrink-0 text-[color:var(--ink)]" />
                 <div className="min-w-0">
-                  <p className="m-0 font-[family-name:var(--font-display)] text-[var(--t-1)] leading-tight text-[color:var(--ink)]">
+                  <p className="m-0 font-[family-name:var(--font-display)] text-title leading-tight text-[color:var(--ink)]">
                     {t.editor.ctaDefault}
                   </p>
                   <p className="meta m-0 mt-2">{t.editor.footerDefault}</p>
@@ -105,11 +98,11 @@ export default async function LandingPage() {
                 : "card card--hair bg-[color:var(--surface)]"
             }
           >
-            <span className="statement block text-[var(--t-4)] leading-none text-[color:var(--accent)]">
+            <span className="statement block text-jumbo leading-none text-[color:var(--accent)]">
               {s.n}
             </span>
             <h3 className="display-md mt-4">{s.title}</h3>
-            <p className="muted mt-3 mb-0 text-[var(--t--1)]">{s.body}</p>
+            <p className="muted mt-3 mb-0 text-meta">{s.body}</p>
           </article>
         ))}
       </section>

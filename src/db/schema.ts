@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   json,
+  mediumtext,
   mysqlEnum,
   mysqlTable,
   timestamp,
@@ -58,8 +59,11 @@ export const businesses = mysqlTable(
     googlePlaceId: varchar("google_place_id", { length: 120 }),
     /** Raw-URL fallback for businesses that only have a share link. */
     googleReviewUrl: varchar("google_review_url", { length: 500 }),
-    /** data: URI, base64. Capped at LOGO_MAX_BYTES on upload (plan §9.3). */
-    logoDataUrl: varchar("logo_data_url", { length: 500000 }),
+    /**
+     * data: URI, base64. Capped at LOGO_MAX_BYTES on upload (plan §9.3); mediumtext
+     * because a 300 KB logo base64-encodes to ~400 KB, past TEXT's 64 KB ceiling.
+     */
+    logoDataUrl: mediumtext("logo_data_url"),
     city: varchar("city", { length: 120 }),
     whatsapp: varchar("whatsapp", { length: 24 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
