@@ -3,7 +3,6 @@ import mysql from "mysql2/promise";
 import * as schema from "./schema";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __qrPool: mysql.Pool | undefined;
 }
 

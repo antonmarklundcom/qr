@@ -2,6 +2,9 @@ import "server-only";
 import { getIronSession, type SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
 import type { UserRole } from "@/db/schema";
+import { SESSION_COOKIE } from "./session-cookie";
+
+export { SESSION_COOKIE };
 
 export interface SessionData {
   userId?: number;
@@ -10,7 +13,7 @@ export interface SessionData {
   role?: UserRole;
 }
 
-export const SESSION_COOKIE = "qr_session";
+
 
 function sessionOptions(): SessionOptions {
   const password = process.env.SESSION_SECRET;
