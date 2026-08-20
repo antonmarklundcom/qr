@@ -1,7 +1,6 @@
 import "server-only";
-import { requireApiTenant, type AuthContext } from "@/lib/auth";
+import { hasRole, requireApiTenant, type AuthContext } from "@/lib/auth";
 import type { UserRole } from "@/db/schema";
-import { hasRole } from "@/lib/auth";
 
 export function jsonError(status: number, message: string) {
   return Response.json({ error: message }, { status });

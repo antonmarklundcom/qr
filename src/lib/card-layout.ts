@@ -128,7 +128,8 @@ export function computeCardLayout({
   const footerColor = bandStyle ? "#FFFFFF" : ink;
 
   const horizontal = preset.widthMm / preset.heightMm >= 1.2;
-  const usableH = content.h - (bandStyle ? bandHeight - safe / 2 : 0);
+  // The band eats into the usable height only when a footer is actually drawn.
+  const usableH = content.h - (bandHeight > 0 ? bandHeight - safe / 2 : 0);
 
   let qr: Rect;
   let textX: number;
