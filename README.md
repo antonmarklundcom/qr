@@ -83,7 +83,7 @@ npm run manage-user -- --add --tenant 3 --email socio@ejemplo.com.py --role admi
 | `/app` | Dashboard: card list and headline scan stats |
 | `/app/businesses`, `/app/businesses/[id]` | Business CRUD, Place ID, logo |
 | `/app/qr/new`, `/app/qr/[id]` | Create a card, then the editor and export |
-| `/app/qr/[id]/stats` | Scans/day, device split, totals |
+| `/app/qr/[id]/stats` | Scans/day, device split, totals — plus feedback volume, average rating and star distribution on a `rating_gate` card |
 | `/r/[slug]` | **Public.** Indexed slug lookup → 302, scan logged after the response. In `rating_gate` mode it renders the interstitial instead |
 | `/r/[slug]/feedback` | **Public.** Receives the private feedback form, then 303s back |
 | `/app/feedback` | Private feedback inbox (unread badge in the nav) |

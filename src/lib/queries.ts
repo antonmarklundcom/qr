@@ -229,3 +229,52 @@ export async function countNewFeedback(tenantId: number) {
     .where(and(eq(feedback.tenantId, tenantId), eq(feedback.status, "new")));
   return Number(row?.count ?? 0);
 }
+
+export interface FeedbackStats {
+  total: number;
+  /** Messages that actually carried a star; the rating is optional on the form. */
+  rated: number;
+  average: number | null;
+  distribution: { rating: number; count: number }[];
+}
+
+/**
+ * Only meaningful for a card whose link is in 'rating_gate' mode — a 'direct' card has
+ * no form to leave a message on, so the page hides this block rather than showing zeros.
+ */
+export async function getFeedbackStats(
+  tenantId: number,
+  shortLinkId: number,
+): Promise<FeedbackStats> {
+  const rows = await db
+    .select({ rating: feedback.rating, count: sql<number>`count(*)` })
+    .from(feedback)
+    .where(
+      and(eq(feedback.tenantId, tenantId), eq(feedback.shortLinkId, shortLinkId)),
+    )
+    .groupBy(feedback.rating);
+
+  let total = 0;
+  let rated = 0;
+  let sum = 0;
+  const counts = new Map<number, number>();
+  for (const row of rows) {
+    const count = Number(row.count);
+    total += count;
+    if (row.rating != null) {
+      rated += count;
+      sum += row.rating * count;
+      counts.set(row.rating, count);
+    }
+  }
+
+  return {
+    total,
+    rated,
+    average: rated > 0 ? sum / rated : null,
+    distribution: [5, 4, 3, 2, 1].map((rating) => ({
+      rating,
+      count: counts.get(rating) ?? 0,
+    })),
+  };
+}
