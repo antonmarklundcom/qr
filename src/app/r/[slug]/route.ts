@@ -1,14 +1,9 @@
-import { after } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { businesses, qrCodes, scans, shortLinks } from "@/db/schema";
+import { businesses, qrCodes, shortLinks } from "@/db/schema";
 import { getDictionary, DEFAULT_LOCALE } from "@/lib/locale";
-import {
-  deviceTypeFromUserAgent,
-  hashUserAgent,
-  safeReferrer,
-} from "@/lib/scan-tracking";
 import { renderInactiveHtml } from "./inactive-page";
+import { gateErrorFrom, gatePage, logScan } from "./gate";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +13,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
+  const url = new URL(request.url);
 
   const [link] = await db
     .select({
@@ -34,26 +30,23 @@ export async function GET(
   if (!link) return brandedNotFound("unknown");
   if (!link.active) return brandedNotFound("inactive", link.tenantId, slug);
 
-  // v1.1 will render an interstitial for mode === 'rating_gate' (plan §5). Until then
-  // every link — including one flipped to rating_gate by hand — redirects.
   const userAgent = request.headers.get("user-agent");
   const referrer = request.headers.get("referer");
 
-  // Never awaited in the response path: the 302 is already on the wire when this runs.
-  after(async () => {
-    try {
-      await db.insert(scans).values({
-        shortLinkId: link.id,
-        tenantId: link.tenantId,
-        deviceType: deviceTypeFromUserAgent(userAgent),
-        uaHash: hashUserAgent(userAgent),
-        referrer: safeReferrer(referrer),
-      });
-    } catch (error) {
-      // A dropped analytics row must never surface to the person scanning the card.
-      console.error("scan insert failed", error);
-    }
-  });
+  // A post-submit reload lands back here with ?sent=1. That is the same person on the
+  // same visit, so it must not count as a second scan.
+  const sent = url.searchParams.get("sent") === "1";
+  if (!sent) logScan(link.id, link.tenantId, userAgent, referrer);
+
+  if (link.mode === "rating_gate") {
+    return gatePage({
+      slug,
+      tenantId: link.tenantId,
+      destinationUrl: link.destinationUrl,
+      sent,
+      error: gateErrorFrom(url.searchParams.get("err")),
+    });
+  }
 
   return new Response(null, {
     status: 302,

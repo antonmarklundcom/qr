@@ -13,6 +13,7 @@ interface PatchBody {
   status?: "draft" | "active" | "archived";
   destinationUrl?: string;
   active?: boolean;
+  mode?: "direct" | "rating_gate";
 }
 
 export async function PATCH(request: Request, { params }: Params) {
@@ -56,6 +57,9 @@ export async function PATCH(request: Request, { params }: Params) {
     linkUpdate.destinationUrl = url;
   }
   if (typeof body.active === "boolean") linkUpdate.active = body.active;
+  if (body.mode && ["direct", "rating_gate"].includes(body.mode)) {
+    linkUpdate.mode = body.mode;
+  }
   if (Object.keys(linkUpdate).length > 0) {
     await db
       .update(shortLinks)

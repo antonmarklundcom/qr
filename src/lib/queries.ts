@@ -3,10 +3,12 @@ import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   businesses,
+  feedback,
   qrCodes,
   scans,
   shortLinks,
   type AppLocale,
+  type FeedbackStatus,
 } from "@/db/schema";
 import { getDictionary } from "@/lib/locale";
 import { timezoneOffsetMinutes } from "@/lib/timezone";
@@ -178,4 +180,52 @@ export async function getScanStats(
       count: Number(d.count),
     })),
   };
+}
+
+/**
+ * The private-feedback inbox (plan §5). Left joined onto the card so a message survives
+ * its card being deleted — the row still carries tenantId and businessId.
+ */
+export async function listFeedback(
+  tenantId: number,
+  filter: FeedbackStatus | "all" = "all",
+  limit = 100,
+) {
+  const scope =
+    filter === "all"
+      ? eq(feedback.tenantId, tenantId)
+      : and(eq(feedback.tenantId, tenantId), eq(feedback.status, filter));
+
+  return db
+    .select({
+      id: feedback.id,
+      rating: feedback.rating,
+      message: feedback.message,
+      contact: feedback.contact,
+      status: feedback.status,
+      createdAt: feedback.createdAt,
+      cardId: qrCodes.id,
+      cardName: qrCodes.name,
+      businessName: businesses.name,
+    })
+    .from(feedback)
+    .leftJoin(
+      qrCodes,
+      and(
+        eq(qrCodes.shortLinkId, feedback.shortLinkId),
+        eq(qrCodes.tenantId, feedback.tenantId),
+      ),
+    )
+    .leftJoin(businesses, eq(businesses.id, feedback.businessId))
+    .where(scope)
+    .orderBy(desc(feedback.createdAt))
+    .limit(limit);
+}
+
+export async function countNewFeedback(tenantId: number) {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(feedback)
+    .where(and(eq(feedback.tenantId, tenantId), eq(feedback.status, "new")));
+  return Number(row?.count ?? 0);
 }

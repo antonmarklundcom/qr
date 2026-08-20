@@ -29,7 +29,7 @@ import {
 interface Props {
   card: Pick<QrCode, "id" | "name" | "status" | "style">;
   business: Pick<Business, "id" | "name" | "logoDataUrl">;
-  shortLink: Pick<ShortLink, "slug" | "destinationUrl" | "active">;
+  shortLink: Pick<ShortLink, "slug" | "destinationUrl" | "active" | "mode">;
   shortUrl: string;
   plan: TenantPlan;
   canEdit: boolean;
@@ -52,6 +52,7 @@ export function QrEditor({
   const [status, setStatus] = useState(card.status);
   const [style, setStyle] = useState<CardStyle>(card.style);
   const [destination, setDestination] = useState(shortLink.destinationUrl);
+  const [mode, setMode] = useState(shortLink.mode);
   const [presetId, setPresetId] = useState(DEFAULT_PRESET_ID);
   const [cropMarks, setCropMarks] = useState(true);
   const [previewSvg, setPreviewSvg] = useState<string | null>(null);
@@ -290,6 +291,35 @@ export function QrEditor({
             />
           </label>
 
+          <label className="field">
+            <span className="label">{t.editor.mode}</span>
+            <select
+              className="select"
+              value={mode}
+              disabled={disabled}
+              onChange={(event) => {
+                setMode(event.target.value as typeof mode);
+                setSaveState("idle");
+              }}
+            >
+              {(["direct", "rating_gate"] as const).map((value) => (
+                <option key={value} value={value}>
+                  {t.editor.modes[value]}
+                </option>
+              ))}
+            </select>
+            <span className="hint">
+              {mode === "rating_gate"
+                ? t.editor.modeGateHint
+                : t.editor.modeDirectHint}{" "}
+              {t.editor.modeHint}
+            </span>
+          </label>
+
+          {mode === "rating_gate" ? (
+            <p className="alert alert--info mb-6">{t.editor.modeCompliance}</p>
+          ) : null}
+
           <div className="grid gap-x-6 sm:grid-cols-2">
             <label className="field">
               <span className="label">{t.dashboard.cardColumnStatus}</span>
@@ -324,7 +354,13 @@ export function QrEditor({
             className="btn btn--primary"
             disabled={disabled || saveState === "saving"}
             onClick={() =>
-              void patch({ name, style, status, destinationUrl: destination })
+              void patch({
+                name,
+                style,
+                status,
+                destinationUrl: destination,
+                mode,
+              })
             }
             data-ev="card_save"
             data-ev-loc="editor"

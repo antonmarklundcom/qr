@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireTenant } from "@/lib/auth";
+import { countNewFeedback } from "@/lib/queries";
 import { logoutAction } from "@/app/(auth)/actions";
 
 export default async function AppLayout({
@@ -8,10 +9,12 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const { t, user, tenant } = await requireTenant();
+  const newFeedback = await countNewFeedback(tenant.id);
 
   const links = [
-    { href: "/app", label: t.nav.dashboard },
-    { href: "/app/businesses", label: t.nav.businesses },
+    { href: "/app", label: t.nav.dashboard, count: 0 },
+    { href: "/app/businesses", label: t.nav.businesses, count: 0 },
+    { href: "/app/feedback", label: t.nav.feedback, count: newFeedback },
   ];
 
   return (
@@ -33,6 +36,9 @@ export default async function AppLayout({
                 className="rounded-[var(--r-sm)] px-3 py-2 text-meta font-medium text-[color:var(--ink-70)] no-underline transition-colors hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--accent)]"
               >
                 {link.label}
+                {link.count > 0 ? (
+                  <span className="badge badge--accent ml-2">{link.count}</span>
+                ) : null}
               </Link>
             ))}
           </nav>

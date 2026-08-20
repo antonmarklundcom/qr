@@ -114,9 +114,39 @@ scans: {
 }
 ```
 
-Relations: tenant 1—n users, 1—n businesses; business 1—n qr_codes; qr_code 1—1 short_link (v1); short_link 1—n scans. Timestamps stored UTC; displayed in `America/Asuncion` / `Europe/Stockholm` per tenant locale.
+v1.1 added one more table, exactly as §5 anticipated — no change to any of the above:
 
-## 5. Star-rating routing → **recommend deferring to v1.1** ⚠️
+```ts
+// feedback — private messages left on the rating-gate interstitial
+feedback: {
+  id: bigint pk,
+  tenantId: bigint fk,
+  shortLinkId: bigint fk (indexed),
+  businessId: bigint fk nullable,               // denormalized: survives its card being deleted
+  rating: tinyint nullable,                     // 1-5, null when no star was picked
+  message: text,
+  contact: varchar(190) nullable,               // whatever the visitor chose to leave
+  status: mysqlEnum('new' | 'read' | 'archived'),
+  createdAt: timestamp (indexed with tenantId)
+}
+```
+
+Relations: tenant 1—n users, 1—n businesses; business 1—n qr_codes; qr_code 1—1 short_link (v1); short_link 1—n scans, 1—n feedback. Timestamps stored UTC; displayed in `America/Asuncion` / `Europe/Stockholm` per tenant locale.
+
+## 5. Star-rating routing → deferred to v1.1, **now built** (compliant variant) ✅
+
+> **Decision taken:** §9.2 was answered in favour of the compliant variant. `/r/[slug]`
+> renders the interstitial when `short_links.mode = 'rating_gate'`; the rating is
+> informational and both the Google review link and the private-feedback form are shown
+> to every visitor, whatever they tapped. `npm run check:gate` fails the pre-push hook
+> if the Google link ever stops rendering in any locale or in the post-submit state.
+> Shipped with it: the `feedback` table, `POST /r/[slug]/feedback` with signed-token +
+> honeypot + rate-limit spam protection, and the `/app/feedback` inbox. As planned, this
+> needed no schema migration on `short_links` and no reprints.
+
+The original analysis follows.
+
+### Original assessment
 
 Flagging this per the brief rather than building it silently. Two reasons:
 
@@ -174,7 +204,7 @@ Analytics view stays deliberately simple in v1: total scans, scans/day chart (la
 ## 9. Open questions — need your decision before implementation
 
 1. **Market order & domain(s).** Is v1 Paraguay-first (resenas.com.py), Sweden-first (minarecensioner), or one codebase deployed twice? My recommendation: **one codebase, locale per tenant, deploy to one domain first** (whichever market you're selling in next). This affects the `/r/` URL printed on physical cards, so it's the one thing that can't change later per card. Which domain does v1 ship on?
-2. **Star-rating routing:** confirm **defer to v1.1** (§5), and — separately — whether v1.1 should be the compliant "both options always visible" variant or classic gating. My recommendation: compliant variant; the gating version is a liability for a product you're attaching your reputation brand to.
+2. ~~**Star-rating routing:** confirm **defer to v1.1** (§5), and — separately — whether v1.1 should be the compliant "both options always visible" variant or classic gating. My recommendation: compliant variant; the gating version is a liability for a product you're attaching your reputation brand to.~~ **Decided: compliant variant, built in v1.1 — see §5.**
 3. **Logo storage:** files on disk under the app (survives redeploys only if the uploads dir is outside the build output — needs a quick verification on Hostinger's Git-deploy behavior) **vs** base64 in the DB (~50–200 KB per logo, dead simple, no filesystem risk). My recommendation for v1: **DB base64 with a 300 KB cap**, migrate to disk/object storage if it ever hurts. OK?
 4. **Free tier shape:** does the tripwire have a free tier at all, or is it paid-only with a demo? Affects `plan` gating and the register flow, nothing structural.
 5. **Scan uniqueness:** v1 counts raw scans only. Is a rough "unique scans" number (via UA-hash + day bucket) wanted in v1, or fine as a later refinement? (It's cheap but imprecise; I'd skip it and label the metric honestly as "scans".)

@@ -41,12 +41,29 @@ so pointing the seed at a real database never plants a guessable owner account.
 |---|---|
 | `npm run dev` / `build` / `start` | Next.js |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm run check:gate` | Compliance + escaping checks on the rating-gate page (no DB needed) |
 | `npm run lint` | ESLint |
 | `npm run db:push` | Apply `src/db/schema.ts` to the database |
 | `npm run db:generate` | Write a migration instead of pushing |
 | `npm run seed:demo` | Idempotent Paraguayan demo tenant + 30 days of scans |
 | `npm run set-plan` | Flip a tenant between `free` and `paid` (`--list`, `--tenant`/`--email`, `--plan`) |
 | `npm run manage-user` | Add a user to an existing tenant, change a role, reset a password |
+
+## What a scan does
+
+Each card picks one of two behaviours in the editor, switchable at any time — the
+printed QR is identical either way:
+
+- **`direct`** — the scan 302s straight to the business's Google review page.
+- **`rating_gate`** — the scan lands on a branded interstitial: a 1–5 star control,
+  the Google review button, and a private-feedback form. Every visitor sees both
+  routes regardless of the rating (see the compliance rule below). Private messages
+  land in `/app/feedback`; nothing about them is published.
+
+The interstitial is server-rendered HTML with no client bundle and works with
+JavaScript disabled. Its form is protected by a slug-scoped signed token (minimum two
+seconds of dwell time, six-hour lifetime), a honeypot field, and a per-link hourly
+ceiling held in process memory — single Node process, so that ceiling is per-instance.
 
 There is no payment integration and no invite flow in v1, by design. A customer pays by
 transferencia and you flip the flag:
@@ -67,7 +84,9 @@ npm run manage-user -- --add --tenant 3 --email socio@ejemplo.com.py --role admi
 | `/app/businesses`, `/app/businesses/[id]` | Business CRUD, Place ID, logo |
 | `/app/qr/new`, `/app/qr/[id]` | Create a card, then the editor and export |
 | `/app/qr/[id]/stats` | Scans/day, device split, totals |
-| `/r/[slug]` | **Public.** Indexed slug lookup → 302, scan logged after the response |
+| `/r/[slug]` | **Public.** Indexed slug lookup → 302, scan logged after the response. In `rating_gate` mode it renders the interstitial instead |
+| `/r/[slug]/feedback` | **Public.** Receives the private feedback form, then 303s back |
+| `/app/feedback` | Private feedback inbox (unread badge in the nav) |
 | `/api/qr`, `/api/qr/[id]` | Create / update / delete a card |
 | `/api/upload/logo` | Logo upload, 300 KB cap, stored as base64 in the DB |
 | `/api/export/permit` | Whether this tenant's exports carry the watermark |
@@ -86,8 +105,14 @@ npm run manage-user -- --add --tenant 3 --email socio@ejemplo.com.py --role admi
 - **The app refuses to start on the `.env.example` `SESSION_SECRET`** — a placeholder in
   source control would let anyone forge a session cookie.
 - **No UI string in a component.** Everything comes from `src/lib/locale`.
+- **The rating gate never filters reviewers.** A card in `rating_gate` mode shows the
+  Google link and the private-feedback form to every visitor, whatever they tapped;
+  the stars are informational. Steering only happy customers to Google violates
+  Google's review policies, and `npm run check:gate` fails if the link ever stops
+  being rendered.
 - **No GitHub Actions workflow.** Quality gate is the husky `pre-push` hook
-  (`typecheck && build`); `pre-commit` blocks anything under `.github/workflows/`.
+  (`typecheck && check:gate && build`); `pre-commit` blocks anything under
+  `.github/workflows/`.
   Deploys run on Hostinger's build servers from a webhook.
 
 ## Deploying

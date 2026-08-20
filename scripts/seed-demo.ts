@@ -14,7 +14,15 @@
 import { randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db, pool } from "../src/db";
-import { businesses, qrCodes, scans, shortLinks, tenants, users } from "../src/db/schema";
+import {
+  businesses,
+  feedback,
+  qrCodes,
+  scans,
+  shortLinks,
+  tenants,
+  users,
+} from "../src/db/schema";
 import { hashPassword } from "../src/lib/passwords";
 import { defaultCardStyle } from "../src/lib/card-style";
 import { buildReviewDestination, generateSlug } from "../src/lib/short-links";
@@ -116,14 +124,16 @@ async function main() {
     shortLinkId = existingLink.id;
     await db
       .update(shortLinks)
-      .set({ tenantId, destinationUrl, mode: "direct", active: true })
+      .set({ tenantId, destinationUrl, mode: "rating_gate", active: true })
       .where(eq(shortLinks.id, shortLinkId));
   } else {
     const [inserted] = await db.insert(shortLinks).values({
       tenantId,
       slug: DEMO_SLUG || generateSlug(),
       destinationUrl,
-      mode: "direct",
+      // The demo card shows the compliant interstitial: it is the thing worth
+      // demonstrating on a sales call, and it fills the feedback inbox below.
+      mode: "rating_gate",
       active: true,
     });
     shortLinkId = inserted.insertId;
@@ -189,6 +199,51 @@ async function main() {
     await db.insert(scans).values(rows.slice(i, i + 200));
   }
 
+  // A handful of private messages so the inbox is not an empty state on a demo.
+  await db.delete(feedback).where(eq(feedback.shortLinkId, shortLinkId));
+  const demoFeedback: {
+    rating: number | null;
+    message: string;
+    contact: string | null;
+    daysAgo: number;
+    status: "new" | "read";
+  }[] = [
+    {
+      rating: 5,
+      message: "Las chipas de la mañana son las mejores de Asunción. Sigan así.",
+      contact: null,
+      daysAgo: 1,
+      status: "new",
+    },
+    {
+      rating: 3,
+      message:
+        "Rica la comida pero esperé casi 20 minutos en la caja un sábado. Faltaría alguien más atendiendo.",
+      contact: "clienta@ejemplo.com.py",
+      daysAgo: 4,
+      status: "new",
+    },
+    {
+      rating: 4,
+      message: "Todo bien, solo faltaría una opción sin azúcar.",
+      contact: "+595981123456",
+      daysAgo: 11,
+      status: "read",
+    },
+  ];
+  await db.insert(feedback).values(
+    demoFeedback.map((f) => ({
+      tenantId,
+      shortLinkId,
+      businessId,
+      rating: f.rating,
+      message: f.message,
+      contact: f.contact,
+      status: f.status,
+      createdAt: new Date(Date.now() - f.daysAgo * 86400000),
+    })),
+  );
+
   console.log(
     [
       "Demo tenant ready:",
@@ -196,6 +251,7 @@ async function main() {
       `  business  Panadería Ñandutí (Asunción)`,
       `  card      Mostrador -> /r/${DEMO_SLUG}`,
       `  scans     ${rows.length} over the last 30 days`,
+      `  feedback  ${demoFeedback.length} private messages (card is in rating_gate mode)`,
     ].join("\n"),
   );
 }
