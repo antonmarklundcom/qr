@@ -1,3 +1,3 @@
-npm run typecheck && npm run build || {
-  echo "Build failed — push blocked."; exit 1;
+npm run typecheck && npm run check:gate && npm run build || {
+  echo "Push blocked — typecheck, gate checks or build failed."; exit 1;
 }

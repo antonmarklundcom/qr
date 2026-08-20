@@ -6,7 +6,9 @@ import {
   mediumtext,
   mysqlEnum,
   mysqlTable,
+  text,
   timestamp,
+  tinyint,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -80,7 +82,12 @@ export const shortLinks = mysqlTable(
     tenantId: tenantId(),
     slug: varchar("slug", { length: 16 }).notNull(),
     destinationUrl: varchar("destination_url", { length: 700 }).notNull(),
-    /** 'rating_gate' is reserved for v1.1 (plan §5) — v1 only ever writes 'direct'. */
+    /**
+     * 'direct' 302s straight to the destination. 'rating_gate' renders the compliant
+     * interstitial (plan §5): the star rating is informational and BOTH the Google
+     * review link and the private feedback form are shown to everyone, whatever the
+     * rating. Steering only happy customers to Google breaks Google's review policy.
+     */
     mode: mysqlEnum("mode", ["direct", "rating_gate"]).notNull().default("direct"),
     active: boolean("active").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -152,6 +159,38 @@ export const scans = mysqlTable(
   ],
 );
 
+/**
+ * Private feedback left on the rating-gate interstitial. Unlike `scans` this DOES hold
+ * personal data the visitor typed (an optional contact), so it is deletable per card
+ * and carries a retention note in the public form (plan §8, GDPR).
+ */
+export const feedback = mysqlTable(
+  "feedback",
+  {
+    id: id(),
+    tenantId: tenantId(),
+    shortLinkId: bigint("short_link_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    businessId: bigint("business_id", { mode: "number", unsigned: true }),
+    /** 1–5, or null when the visitor wrote a message without picking a star. */
+    rating: tinyint("rating"),
+    message: text("message").notNull(),
+    /** Whatever the visitor chose to leave: an email, a phone, or nothing. */
+    contact: varchar("contact", { length: 190 }),
+    status: mysqlEnum("status", ["new", "read", "archived"])
+      .notNull()
+      .default("new"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("feedback_tenant_created_idx").on(t.tenantId, t.createdAt),
+    index("feedback_short_link_idx").on(t.shortLinkId),
+    index("feedback_tenant_status_idx").on(t.tenantId, t.status),
+  ],
+);
+
 export const tenantsRelations = relations(tenants, ({ many }) => ({
   users: many(users),
   businesses: many(businesses),
@@ -187,6 +226,19 @@ export const shortLinksRelations = relations(shortLinks, ({ one, many }) => ({
     references: [tenants.id],
   }),
   scans: many(scans),
+  feedback: many(feedback),
+}));
+
+export const feedbackRelations = relations(feedback, ({ one }) => ({
+  tenant: one(tenants, { fields: [feedback.tenantId], references: [tenants.id] }),
+  shortLink: one(shortLinks, {
+    fields: [feedback.shortLinkId],
+    references: [shortLinks.id],
+  }),
+  business: one(businesses, {
+    fields: [feedback.businessId],
+    references: [businesses.id],
+  }),
 }));
 
 export const scansRelations = relations(scans, ({ one }) => ({
@@ -202,6 +254,9 @@ export type Business = typeof businesses.$inferSelect;
 export type QrCode = typeof qrCodes.$inferSelect;
 export type ShortLink = typeof shortLinks.$inferSelect;
 export type Scan = typeof scans.$inferSelect;
+export type Feedback = typeof feedback.$inferSelect;
 export type UserRole = User["role"];
 export type TenantPlan = Tenant["plan"];
 export type AppLocale = Tenant["locale"];
+export type ShortLinkMode = ShortLink["mode"];
+export type FeedbackStatus = Feedback["status"];

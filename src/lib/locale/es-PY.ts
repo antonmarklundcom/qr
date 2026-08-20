@@ -32,6 +32,7 @@ export const esPY = {
     error: "Algo salió mal. Intentá de nuevo.",
     yes: "Sí",
     no: "No",
+    or: "o",
   },
 
   auth: {
@@ -59,6 +60,7 @@ export const esPY = {
     cards: "Tarjetas",
     businesses: "Negocios",
     stats: "Estadísticas",
+    feedback: "Comentarios",
   },
 
   dashboard: {
@@ -141,6 +143,18 @@ export const esPY = {
     errorCorrection: "Corrección de errores",
     saveCard: "Guardar tarjeta",
     createCard: "Crear tarjeta",
+    mode: "Qué pasa al escanear",
+    modeHint:
+      "El QR impreso es el mismo en los dos casos: esto se puede cambiar cuando quieras.",
+    modes: {
+      direct: "Ir directo a Google",
+      rating_gate: "Mostrar una pantalla intermedia",
+    },
+    modeDirectHint: "El escaneo redirige al instante a tu página de reseñas.",
+    modeGateHint:
+      "Antes de Google mostramos una pantalla donde el cliente puede calificarte y, si quiere, dejarte un comentario privado. Las dos opciones se ven siempre, sin importar las estrellas.",
+    modeCompliance:
+      "Nunca escondemos el enlace a Google según la calificación: filtrar clientes contentos viola las políticas de reseñas de Google.",
     dots: {
       square: "Cuadrado",
       dots: "Puntitos",
@@ -222,6 +236,63 @@ export const esPY = {
       "El código que escaneaste ya no está en uso. Si llegaste acá desde un negocio, avisales.",
     unknownTitle: "No encontramos este código",
     unknownBody: "Revisá que hayas escaneado bien el código.",
+  },
+
+  gate: {
+    title: "¿Cómo estuvo tu experiencia?",
+    subtitle: "Tu opinión nos ayuda a mejorar. Elegí una opción, las dos están disponibles.",
+    ratingLabel: "Tu calificación",
+    ratingOptional: "Opcional",
+    stars: {
+      "1": "1 estrella",
+      "2": "2 estrellas",
+      "3": "3 estrellas",
+      "4": "4 estrellas",
+      "5": "5 estrellas",
+    },
+    googleCta: "Dejar una reseña en Google",
+    googleHint: "Se abre tu página de Google. Toda reseña es bienvenida.",
+    privateCta: "Escribirnos en privado",
+    privateHint: "Va solo al negocio, no se publica en ningún lado.",
+    messageLabel: "Tu comentario",
+    messagePlaceholder: "Contanos qué te pareció…",
+    contactLabel: "Tu correo o WhatsApp",
+    contactHint: "Solo si querés que te respondan.",
+    send: "Enviar comentario",
+    privacy:
+      "Guardamos lo que escribas y el contacto que dejes para que el negocio pueda responderte. No guardamos tu IP ni tu ubicación.",
+    thanksTitle: "¡Gracias!",
+    thanksBody: "Recibimos tu comentario y el negocio lo va a leer.",
+    thanksGoogle: "Si querés, también podés dejar una reseña pública en Google.",
+    errorEmpty: "Escribí un comentario antes de enviar.",
+    errorTooFast: "Esperá un momento antes de enviar.",
+    errorExpired: "La página estuvo abierta demasiado tiempo. Recargala e intentá de nuevo.",
+    errorRateLimited: "Ya recibimos varios comentarios desde acá. Probá más tarde.",
+  },
+
+  feedback: {
+    title: "Comentarios privados",
+    subtitle:
+      "Lo que tus clientes te escribieron desde la pantalla intermedia. No se publica en ningún lado.",
+    empty: "Todavía no recibiste comentarios privados.",
+    emptyHint:
+      "Aparecen acá cuando una tarjeta usa la pantalla intermedia y un cliente te escribe.",
+    newCount: "Sin leer",
+    rating: "Calificación",
+    noRating: "Sin calificación",
+    contact: "Contacto",
+    card: "Tarjeta",
+    received: "Recibido",
+    markRead: "Marcar como leído",
+    markNew: "Marcar como no leído",
+    archive: "Archivar",
+    unarchive: "Desarchivar",
+    delete: "Eliminar",
+    filterAll: "Todos",
+    filterNew: "Sin leer",
+    filterArchived: "Archivados",
+    retentionNote:
+      "Estos mensajes contienen datos personales que dejó el cliente. Eliminá los que ya no necesites.",
   },
 
   landing: {

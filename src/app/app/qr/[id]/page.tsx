@@ -55,6 +55,7 @@ export default async function CardEditorPage({
           slug: shortLink.slug,
           destinationUrl: shortLink.destinationUrl,
           active: shortLink.active,
+          mode: shortLink.mode,
         }}
         shortUrl={buildShortUrl(shortLink.slug)}
       />
