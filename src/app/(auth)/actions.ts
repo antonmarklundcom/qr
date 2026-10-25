@@ -7,6 +7,11 @@ import { tenants, users } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { hashPassword, verifyPassword, MIN_PASSWORD_LENGTH } from "@/lib/passwords";
 import { getDictionary, DEFAULT_LOCALE } from "@/lib/locale";
+import {
+  isLoginBlocked,
+  recordLoginFailure,
+  resetLoginFailures,
+} from "@/lib/login-throttle";
 
 export interface AuthFormState {
   error?: string;
@@ -26,6 +31,10 @@ export async function loginAction(
   const password = String(formData.get("password") ?? "");
   if (!email || !password) return { error: t().auth.invalidCredentials };
 
+  // Too many recent failures for this account: the same generic error, even with
+  // the right password. Keyed on the email, not the IP (spoofable / shared behind a proxy).
+  if (isLoginBlocked(email)) return { error: t().auth.invalidCredentials };
+
   const [user] = await db
     .select()
     .from(users)
@@ -33,8 +42,10 @@ export async function loginAction(
     .limit(1);
 
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
+    recordLoginFailure(email);
     return { error: t().auth.invalidCredentials };
   }
+  resetLoginFailures(email);
 
   const session = await getSession();
   session.userId = user.id;

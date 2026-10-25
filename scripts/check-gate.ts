@@ -103,6 +103,25 @@ async function main() {
   for (let i = 0; i < 20; i++) if (rateLimitOk("check-gate")) allowed++;
   check("the hourly submit ceiling holds", allowed === 12);
 
+  const {
+    isLoginBlocked,
+    LOGIN_MAX_FAILURES,
+    LOGIN_WINDOW_MS,
+    recordLoginFailure,
+    resetLoginFailures,
+  } = await import("../src/lib/login-throttle");
+  const t0 = Date.now();
+  for (let i = 0; i < LOGIN_MAX_FAILURES - 1; i++) recordLoginFailure("a@x.test", t0);
+  check("login: below the failure cap is still allowed", !isLoginBlocked("a@x.test", t0));
+  recordLoginFailure("a@x.test", t0);
+  check("login: N failures block the account (even with the right password)", isLoginBlocked("a@x.test", t0 + 1000));
+  check("login: another account is independent", !isLoginBlocked("b@x.test", t0 + 1000));
+  check("login: the block expires with the window", !isLoginBlocked("a@x.test", t0 + LOGIN_WINDOW_MS + 1));
+  for (let i = 0; i < LOGIN_MAX_FAILURES - 1; i++) recordLoginFailure("c@x.test", t0);
+  resetLoginFailures("c@x.test");
+  recordLoginFailure("c@x.test", t0);
+  check("login: a successful login resets the counter", !isLoginBlocked("c@x.test", t0));
+
   console.log(failures === 0 ? "\nAll gate checks passed." : `\n${failures} check(s) failed.`);
   process.exit(failures === 0 ? 0 : 1);
 }
